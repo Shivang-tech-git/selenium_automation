@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
@@ -26,8 +27,6 @@ def finviz():
         elementFinder('//a[@class="filter" and contains(text(),"Settings")]','click')
     except:
         pass
-    elementFinder('//select[@id="signalSelect"]/option[text()="Multiple Bottom"]')
-    driver.find_element_by_xpath('//select[@id="signalSelect"]/option[text()="Multiple Bottom"]').click()
     should_restart = True
     while should_restart:
         try:
@@ -51,41 +50,56 @@ def finviz():
                 should_restart = False
 
 def save_table():
-    table = driver.find_element_by_xpath('(//div[@id="screener-content"]/descendant::table)[4]')
-    cell_list = [[col.get_attribute('innerText') for col in table.find_elements_by_xpath('./descendant::tr[1]/td')]]
-    next_page = True
-    while next_page:
-        table = driver.find_element_by_xpath('(//div[@id="screener-content"]/descendant::table)[4]')
-        body = table.find_elements_by_xpath('./descendant::tr')
-        for row in body:
-            cells = row.find_elements_by_xpath('./td')
-            cell_list.append([cell.get_attribute('innerText') for cell in cells])
-        try:
-            elementFinder('//a[@class="screener_arrow"]','click')
-        except:
-            next_page = False
-
-    df = pd.DataFrame(cell_list)
-    df = df.drop(0)
-    new_header = df.iloc[0]
-    df = df[1:]
-    df.columns = new_header
-    df['signal'] = 'Multiple Bottom'
+    df = pd.DataFrame()
+    signals = driver.find_elements_by_xpath('//select[@id="signalSelect"]/option')
+    signals_list = [signal.get_attribute('innerText') for signal in signals]
+    for signal in signals_list:
+        if signal != 'None (all stocks)':
+            elementFinder('//select[@id="signalSelect"]/option[text()="{}"]'.format(signal))
+            driver.find_element_by_xpath('//select[@id="signalSelect"]/option[text()="{}"]'.format(signal)).click()
+            elementFinder('//select[@id="signalSelect"]/option[text()="{}"]'.format(signal))
+            data = []
+            table = driver.find_element_by_xpath('(//div[@id="screener-content"]/descendant::table)[4]')
+            columns = [col.get_attribute('innerText') for col in table.find_elements_by_xpath('./descendant::tr[1]/td')]
+            next_page = True
+            while next_page:
+                table = driver.find_element_by_xpath('(//div[@id="screener-content"]/descendant::table)[4]')
+                body = table.find_elements_by_xpath('./descendant::tr')
+                for row in body:
+                    cells = row.find_elements_by_xpath('./td')
+                    # dont add header row
+                    if cells[1].get_attribute('innerText') != 'Ticker':
+                        one_row = []
+                        one_row = [cell.get_attribute('innerText') for cell in cells]
+                        one_row.insert(1,cells[1].find_element_by_xpath('./a').get_attribute('href'))
+                        one_row.extend(['{}'.format(signal)])
+                        data.append(one_row)
+                try:
+                    elementFinder('//a[@class="screener_arrow"]','click')
+                except:
+                    next_page = False
+            current_signal = pd.DataFrame(data)
+            df = df.append(current_signal)
+    columns.insert(1,'URL')
+    columns.extend(['Signal'])
+    df.columns = columns
     df.to_csv('finviz {}.csv'.format(datetime.today().strftime('%Y-%m-%d')),index=False)
 
 
 if __name__ == '__main__':
     chromedriver_path = os.path.join(os.path.abspath(os.getcwd()), "chromedriver.exe")
-    driver = webdriver.Chrome(chromedriver_path)
+    chrome_options = Options()
+    chrome_options.add_argument("load-extension=C:\\Users\\Shivang Gupta\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Extensions\\cfhdojbkjhnklbpkdaibdccddilifddb\\3.11_0")
+    driver = webdriver.Chrome(chromedriver_path,chrome_options=chrome_options)
     print('Running Chromedriver....')
+    # driver.get('https://finviz.com/screener.ashx?v=152&c=0,1,2,3,4,5,6,7,8,9'
+    #            ',10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29'
+    #            ',30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49'
+    #            ',50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69'
+    #            ',70')
     driver.get("https://finviz.com/")
     driver.maximize_window()
+    driver.switch_to.window(driver.window_handles[0])
     finviz()
     save_table()
     print('Done')
-    # df = pd.read_csv('uk-500.csv')
-    # df = pd.read_excel('filename', sheet_name='Sheet1')
-    # df = df.loc[df['email'].str.endswith('@gmail.com')]
-    # writer = pd.ExcelWriter('test2.xlsx')
-    # df.to_excel(writer, index=False)
-    # writer.save()
