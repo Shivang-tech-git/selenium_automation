@@ -19,7 +19,12 @@ def open_edge():
     Edge_Options.use_chromium = True
     Edge_Options.add_argument('no-sandbox')
     Edge_Options.add_argument("user-data-dir=C:/Users/" + getpass.getuser() + "/AppData/Local/Microsoft/Edge/User Data")
-    driver = Edge(options=Edge_Options)
+    try:
+        driver = Edge(options=Edge_Options)
+    except:
+        messagebox.showinfo('Frames event coding tool',
+                            'Please close Edge and then run the tool.')
+    driver.set_page_load_timeout(60)
     print('Running Edgedriver....')
     driver.get('https://theframe.catlin.com/?windowId=1')
     driver.maximize_window()
@@ -42,9 +47,13 @@ def run_cat():
                                  index=False,
                                  expand='table').value
     open_edge()
-    cat_event_coding.cat_event_coding(driver=driver,cat_df=cat_df)
-    messagebox.showinfo('Frames event coding tool',
-                        'PCS Allocation Completed, Please check the CAT output file to see status.')
+    try:
+        cat_event_coding.cat_event_coding(driver=driver,cat_df=cat_df)
+        messagebox.showinfo('Frames event coding tool',
+                            'PCS Allocation Completed, Please check the CAT output file to see status.')
+    except:
+        messagebox.showinfo('Frames event coding tool',
+                            'Frames is not responding. Please run the tool for remaining BPR')
 
 def run_pcs():
     try:
@@ -58,8 +67,12 @@ def run_pcs():
                                      index=False,
                                      expand='table').value
     open_edge()
-    pcs_event_coding.pcs_event_coding(driver=driver,pcs_df=pcs_df)
-    messagebox.showinfo('Frames event coding tool', 'PCS Allocation Completed, Please check the PCS output file to see status.')
+    try:
+        pcs_event_coding.pcs_event_coding(driver=driver,pcs_df=pcs_df)
+        messagebox.showinfo('Frames event coding tool', 'PCS Allocation Completed, Please check the PCS output file to see status.')
+    except:
+        messagebox.showinfo('Frames event coding tool',
+                            'Frames is not responding. Please run the tool for remaining BPR')
 
 if __name__ == '__main__':
     window = tk.Tk()
