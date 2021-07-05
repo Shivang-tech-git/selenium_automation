@@ -17,6 +17,20 @@ def axaXlElementFinder(element, action="", text=""):
         htmlElement.send_keys(text)
 
 
+def pcs_event_refresh(driver, pcs_df, ue_pcs_df):
+    global pcs_driver
+    pcs_driver = driver
+    # --------------- navigate to outstanding movements -------------------
+    axaXlElementFinder('//td[@class="mainmenu" and text()="Claims"]', 'click')
+    axaXlElementFinder('//div[@id="claims.outstandingMovements"]/a[text()="Outstanding movements"]', 'click')
+    # --------------- For each row in pcs_df dataframe --------------------
+    for i, row in ue_pcs_df.iterrows():
+        pcs_coding_process(df=ue_pcs_df, i=i, row=row)
+        # -------------- update pcs_df with new values from ue_pcs_df --------------
+        pcs_df.loc[pcs_df['BPR'] == ue_pcs_df.at[i, 'BPR'], 'Status'] = ue_pcs_df.at[i,'Status']
+        pcs_df.to_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
+    pcs_driver.quit()
+
 def pcs_event_coding(driver, pcs_df):
     global pcs_driver
     pcs_driver = driver
@@ -29,15 +43,10 @@ def pcs_event_coding(driver, pcs_df):
         pcs_coding_process(df=pcs_df, i=i,row=row)
         pcs_df.to_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
     err_df = pcs_df.loc[pcs_df['Status'] == 'Undefined Error']
-    err_df = err_df.set_index('BPR')
     # -------------- run again for undefined error -----------------
     if err_df.shape[0] > 0:
         for i, row in err_df.iterrows():
-            pcs_coding_process(df=err_df, i=i, row=row)
-            # -------------- update pcs_df with new values from err_df --------------
-            pcs_df = pcs_df.set_index('BPR')
-            pcs_df.update(err_df)
-            pcs_df.reset_index(inplace=True)
+            pcs_df.loc[pcs_df['BPR'] == err_df.at[i, 'BPR'], 'Status'] = err_df.at[i, 'Status']
             pcs_df.to_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
     pcs_driver.quit()
 
@@ -139,6 +148,7 @@ def pcs_coding_process(df, i, row):
             axaXlElementFinder('//div[@id="claims.outstandingMovements"]/a[text()="Outstanding movements"]',
                                'click')
         except:
+            pcs_driver.quit()
             pcs_driver.get('https://theframe.catlin.com/?windowId=1')
             axaXlElementFinder('//td[@class="mainmenu" and text()="Claims"]', 'click')
             axaXlElementFinder('//div[@id="claims.outstandingMovements"]/a[text()="Outstanding movements"]',
