@@ -31,21 +31,22 @@ def pcs_event_refresh(driver, pcs_df, ue_pcs_df):
         pcs_df.to_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
     pcs_driver.quit()
 
-def pcs_event_coding(driver, pcs_df):
+def pcs_event_coding(driver, pcs_df, blank_pcs_df):
     global pcs_driver
     pcs_driver = driver
     # --------------- navigate to outstanding movements -------------------
     axaXlElementFinder('//td[@class="mainmenu" and text()="Claims"]', 'click')
     axaXlElementFinder('//div[@id="claims.outstandingMovements"]/a[text()="Outstanding movements"]', 'click')
     # --------------- For each row in dataframe --------------------
-    pcs_df['Status'] = ''
-    for i, row in pcs_df.iterrows():
-        pcs_coding_process(df=pcs_df, i=i,row=row)
+    for i, row in blank_pcs_df.iterrows():
+        pcs_coding_process(df=blank_pcs_df, i=i,row=row)
+        pcs_df.loc[pcs_df['BPR'] == blank_pcs_df.at[i, 'BPR'], 'Status'] = blank_pcs_df.at[i, 'Status']
         pcs_df.to_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
     err_df = pcs_df.loc[pcs_df['Status'] == 'Undefined Error']
     # -------------- run again for undefined error -----------------
     if err_df.shape[0] > 0:
         for i, row in err_df.iterrows():
+            pcs_coding_process(df=err_df, i=i, row=row)
             pcs_df.loc[pcs_df['BPR'] == err_df.at[i, 'BPR'], 'Status'] = err_df.at[i, 'Status']
             pcs_df.to_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
     pcs_driver.quit()

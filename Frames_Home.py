@@ -4,6 +4,7 @@ from tkinter import messagebox
 from tkinter import filedialog
 from FramesEventCoding import cat_event_coding
 from FramesEventCoding import pcs_event_coding
+from pathlib import Path
 from datetime import datetime
 import os, getpass
 import pandas
@@ -21,6 +22,8 @@ def open_edge():
     Edge_Options.use_chromium = True
     Edge_Options.add_argument('no-sandbox')
     Edge_Options.add_argument("user-data-dir=C:/Users/" + getpass.getuser() + "/AppData/Local/Microsoft/Edge/User Data")
+    Edge_Options.add_argument("headless")
+    Edge_Options.add_argument("disable-gpu")
     try:
         driver = Edge(options=Edge_Options)
     except:
@@ -29,7 +32,6 @@ def open_edge():
     driver.set_page_load_timeout(60)
     print('Running Edgedriver....')
     driver.get('https://theframe.catlin.com/?windowId=1')
-    driver.maximize_window()
 
 
 def allocation_file():
@@ -39,24 +41,54 @@ def allocation_file():
 
 def run_event(sht_name):
     try:
-        sht = xlwings.Book(filename).sheets[sht_name]
-    except:
-        messagebox.showinfo('Frames event coding tool',
-                            'Please select allocation file and then run the tool.')
-        return
-    open_edge()
-    try:
-        if sht_name == 'Property Claims':
-            pcs_df = sht.range('A1').options(pandas.DataFrame,header=1,index=False,expand='table').value
-            pcs_event_coding.pcs_event_coding(driver=driver,pcs_df=pcs_df)
-            messagebox.showinfo('Frames event coding tool',
-                                'PCS Allocation Completed, Please check the PCS output file to see status.')
-        elif sht_name == 'CAT':
-            cat_df = sht.range('A1').options(pandas.DataFrame,header=1,index=False,expand='table').value
-            cat_event_coding.cat_event_coding(driver=driver, cat_df=cat_df)
-            messagebox.showinfo('Frames event coding tool',
-                                'CAT Allocation Completed, Please check the CAT output file to see status.')
+        # if output file checkbox is not selected
+        if output_selected.get() == 0:
+            # Check if allocation file exists
+            try:
+                sht = xlwings.Book(filename).sheets[sht_name]
+            except:
+                messagebox.showinfo('Frames event coding tool',
+                                'Please select allocation file and then run the tool.')
+                return
+            # work with allocation file
+            open_edge()
+            if sht_name == 'Property Claims':
+                pcs_df = sht.range('A1').options(pandas.DataFrame, header=1, index=False, expand='table').value
+                pcs_df['Status'] = ''
+                pcs_df.to_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
+                blank_pcs_df = pcs_df
+                pcs_event_coding.pcs_event_coding(driver=driver, pcs_df=pcs_df, blank_pcs_df=blank_pcs_df)
+                messagebox.showinfo('Frames event coding tool',
+                                    'PCS Allocation Completed, Please check the PCS output file to see status.')
+            elif sht_name == 'CAT':
+                cat_df = sht.range('A1').options(pandas.DataFrame, header=1, index=False, expand='table').value
+                cat_df['Status'] = ''
+                cat_df.to_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
+                blank_cat_df = cat_df
+                cat_event_coding.cat_event_coding(driver=driver, cat_df=cat_df, blank_cat_df=blank_cat_df)
+                messagebox.showinfo('Frames event coding tool',
+                                    'CAT Allocation Completed, Please check the CAT output file to see status.')
+
+        # if output file checkbox is selected
+        elif output_selected.get() == 1:
+            open_edge()
+            # work with output file
+            if sht_name == 'Property Claims':
+                pcs_df = pandas.read_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')))
+                blank_pcs_df = pcs_df.loc[pcs_df['Status'].isnull()]
+                pcs_event_coding.pcs_event_coding(driver=driver, pcs_df=pcs_df, blank_pcs_df=blank_pcs_df)
+                messagebox.showinfo('Frames event coding tool',
+                                    'PCS Allocation Completed, Please check the PCS output file to see status.')
+
+            elif sht_name == 'CAT':
+                cat_df = pandas.read_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')))
+                blank_cat_df = cat_df.loc[cat_df['Status'].isnull()]
+                cat_event_coding.cat_event_coding(driver=driver, cat_df=cat_df, blank_cat_df=blank_cat_df)
+                messagebox.showinfo('Frames event coding tool',
+                                    'CAT Allocation Completed, Please check the CAT output file to see status.')
+
     except Exception as msg:
+        driver.quit()
         messagebox.showerror('Frames event coding tool', traceback.format_exc())
 
 def run_refresh(event):
@@ -80,6 +112,7 @@ def run_refresh(event):
             else:
                 messagebox.showinfo('Frames event coding tool',
                                     'No BPR found with undefined error status in CAT output file.')
+
         elif event == 'pcs':
             ue_pcs_df = pcs_df.loc[pcs_df['Status'] == 'Undefined Error']
             if ue_pcs_df.shape[0] > 0:
@@ -89,11 +122,15 @@ def run_refresh(event):
             else:
                 messagebox.showinfo('Frames event coding tool',
                                     'No BPR found with undefined error status in PCS output file.')
+
     except Exception as msg:
+        driver.quit()
         messagebox.showerror('Frames event coding tool', traceback.format_exc())
+
 
 if __name__ == '__main__':
     window = tk.Tk()
+    output_selected = tk.IntVar()
     window.title('AXA XL')
     # ------------------------------- Title ----------------------------
     greeting = tk.Label(text="Frames event coding tool", font=('Arial',12), fg='yellow', bg='green', width=60)
@@ -103,6 +140,8 @@ if __name__ == '__main__':
                         width=30, borderwidth=2, relief="ridge").grid(row=0, column=0, pady=5)
     btn_open = tk.Button(master=frm_open, text='Browse',font=('Arial',10), width=15, bg='lavender',
                          command=allocation_file).grid(row=0,column=1,pady=5)
+    use_output_file = tk.Checkbutton(master=frm_open, text='Use Output file',font=('Arial',10), width=15, bg='lavender',
+                         variable=output_selected).grid(row=0,column=2,pady=5)
     # ------------------------------ CAT event code ----------------------------------
     frm_extract = tk.Frame(master=window, width=60)
     lbl_cat = tk.Label(master=frm_extract, text='CAT event coding',font=('Arial',10),

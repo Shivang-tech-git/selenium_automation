@@ -27,32 +27,27 @@ def cat_event_refresh(driver, cat_df, ue_cat_df):
         cat_coding_process(df=ue_cat_df, i=i, row=row)
         # -------------- update pcs_df with new values from ue_pcs_df --------------
         cat_df.loc[cat_df['BPR'] == ue_cat_df.at[i, 'BPR'], 'Status'] = ue_cat_df.at[i, 'Status']
-        cat_df.to_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
+        cat_df.to_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
     cat_driver.quit()
 
-def cat_event_coding(driver,cat_df):
+def cat_event_coding(driver, cat_df, blank_cat_df):
     global cat_driver
     cat_driver = driver
     # --------------- navigate to outstanding movements -------------------
     axaXlElementFinder('//td[@class="mainmenu" and text()="Claims"]','click')
     axaXlElementFinder('//div[@id="claims.outstandingMovements"]/a[text()="Outstanding movements"]','click')
     # --------------- For each row in cat_df, find BPR --------------------
-    cat_df['Status'] = ''
-    for i, row in cat_df.iterrows():
-        cat_coding_process(df=cat_df,i=i,row=row)
+    for i, row in blank_cat_df.iterrows():
+        cat_coding_process(df=blank_cat_df,i=i,row=row)
+        cat_df.loc[cat_df['BPR'] == blank_cat_df.at[i, 'BPR'], 'Status'] = blank_cat_df.at[i, 'Status']
         cat_df.to_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
     err_df = cat_df.loc[cat_df['Status'] == 'Undefined Error']
     # -------------- run again for undefined error -----------------
     if err_df.shape[0] > 0:
         for i, row in err_df.iterrows():
-            cat_coding_process(df=err_df, i=i, row=row)
             # -------------- update cat_df with new values from err_df --------------
+            cat_coding_process(df=err_df, i=i, row=row)
             cat_df.loc[cat_df['BPR'] == err_df.at[i, 'BPR'], 'Status'] = err_df.at[i, 'Status']
-            # cat_df = cat_df.set_index('BPR')
-            # err_df = err_df.set_index('BPR')
-            # cat_df.update(err_df)
-            # cat_df.reset_index(inplace=True)
-            # err_df.reset_index(inplace=True)
             cat_df.to_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
     cat_driver.quit()
 
