@@ -4,6 +4,7 @@ from tkinter import messagebox
 from tkinter import filedialog
 from FramesEventCoding import cat_event_coding
 from FramesEventCoding import pcs_event_coding
+from FramesEventCoding import main_dataframe
 from pathlib import Path
 from datetime import datetime
 import os, getpass
@@ -39,7 +40,108 @@ def allocation_file():
     filename = filedialog.askopenfilename(initialdir="/",
                                           title="Select allocation File")
 
+# def run_event(sht_name):
+#     try:
+#         # if output file checkbox is not selected
+#         if output_selected.get() == 0:
+#             # Check if allocation file exists
+#             try:
+#                 sht = xlwings.Book(filename).sheets[sht_name]
+#             except:
+#                 messagebox.showinfo('Frames event coding tool',
+#                                 'Please select allocation file and then run the tool.')
+#                 return
+#             # work with allocation file
+#             open_edge()
+#             if sht_name == 'Property Claims':
+#                 pcs_df = sht.range('A1').options(pandas.DataFrame, header=1, index=False, expand='table').value
+#                 pcs_df['Status'] = ''
+#                 pcs_df.to_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
+#                 blank_pcs_df = pcs_df
+#                 pcs_event_coding.pcs_event_coding(driver=driver, pcs_df=pcs_df, blank_pcs_df=blank_pcs_df)
+#                 messagebox.showinfo('Frames event coding tool',
+#                                     'PCS Allocation Completed, Please check the PCS output file to see status.')
+#             elif sht_name == 'CAT':
+#                 cat_df = sht.range('A1').options(pandas.DataFrame, header=1, index=False, expand='table').value
+#                 cat_df['Status'] = ''
+#                 cat_df.to_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
+#                 blank_cat_df = cat_df
+#                 cat_event_coding.cat_event_coding(driver=driver, cat_df=cat_df, blank_cat_df=blank_cat_df)
+#                 messagebox.showinfo('Frames event coding tool',
+#                                     'CAT Allocation Completed, Please check the CAT output file to see status.')
+#
+#         # if output file checkbox is selected
+#         elif output_selected.get() == 1:
+#             open_edge()
+#             # work with output file
+#             if sht_name == 'Property Claims':
+#                 pcs_df = pandas.read_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')))
+#                 blank_pcs_df = pcs_df.loc[pcs_df['Status'].isnull()]
+#                 pcs_event_coding.pcs_event_coding(driver=driver, pcs_df=pcs_df, blank_pcs_df=blank_pcs_df)
+#                 messagebox.showinfo('Frames event coding tool',
+#                                     'PCS Allocation Completed, Please check the PCS output file to see status.')
+#
+#             elif sht_name == 'CAT':
+#                 cat_df = pandas.read_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')))
+#                 blank_cat_df = cat_df.loc[cat_df['Status'].isnull()]
+#                 cat_event_coding.cat_event_coding(driver=driver, cat_df=cat_df, blank_cat_df=blank_cat_df)
+#                 messagebox.showinfo('Frames event coding tool',
+#                                     'CAT Allocation Completed, Please check the CAT output file to see status.')
+#
+#     except Exception as msg:
+#         driver.quit()
+#         messagebox.showerror('Frames event coding tool', traceback.format_exc())
+#
+# def run_refresh(event):
+#     try:
+#         if event == 'cat':
+#             cat_df = pandas.read_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')))
+#         elif event == 'pcs':
+#             pcs_df = pandas.read_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')))
+#     except:
+#         messagebox.showerror('Frames event coding tool',
+#                             'Error: Ouptut file does not exist.')
+#         return
+#     open_edge()
+#     try:
+#         if event == 'cat':
+#             ue_cat_df = cat_df.loc[cat_df['Status'] == 'Undefined Error']
+#             if ue_cat_df.shape[0] > 0:
+#                 cat_event_coding.cat_event_refresh(driver=driver, cat_df=cat_df, ue_cat_df=ue_cat_df)
+#                 messagebox.showinfo('Frames event coding tool',
+#                                     'CAT Allocation Completed, Please check the CAT output file to see status.')
+#             else:
+#                 messagebox.showinfo('Frames event coding tool',
+#                                     'No BPR found with undefined error status in CAT output file.')
+#
+#         elif event == 'pcs':
+#             ue_pcs_df = pcs_df.loc[pcs_df['Status'] == 'Undefined Error']
+#             if ue_pcs_df.shape[0] > 0:
+#                 pcs_event_coding.pcs_event_refresh(driver=driver, pcs_df=pcs_df,ue_pcs_df=ue_pcs_df)
+#                 messagebox.showinfo('Frames event coding tool',
+#                                 'PCS Allocation Completed, Please check the PCS output file to see status.')
+#             else:
+#                 messagebox.showinfo('Frames event coding tool',
+#                                     'No BPR found with undefined error status in PCS output file.')
+#
+#     except Exception as msg:
+#         driver.quit()
+#         messagebox.showerror('Frames event coding tool', traceback.format_exc())
+
 def run_event(sht_name):
+    if sht_name == 'Property Claims':
+        selected_event = {'event':'PCS',
+                          'output_filename':'PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')),
+                          'message':'PCS Allocation Completed, Please check the PCS output file to see status.'}
+    elif sht_name == 'CAT':
+        selected_event = {'event':'CAT',
+                          'output_filename':'CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')),
+                          'message':'CAT Allocation Completed, Please check the CAT output file to see status.'}
+    elif sht_name == 'Various':
+        selected_event = {'event':'VARS',
+                          'output_filename':'VARS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')),
+                          'message':'VARS Allocation Completed, Please check the VARS output file to see status.'}
+
     try:
         # if output file checkbox is not selected
         if output_selected.get() == 0:
@@ -52,81 +154,61 @@ def run_event(sht_name):
                 return
             # work with allocation file
             open_edge()
-            if sht_name == 'Property Claims':
-                pcs_df = sht.range('A1').options(pandas.DataFrame, header=1, index=False, expand='table').value
-                pcs_df['Status'] = ''
-                pcs_df.to_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
-                blank_pcs_df = pcs_df
-                pcs_event_coding.pcs_event_coding(driver=driver, pcs_df=pcs_df, blank_pcs_df=blank_pcs_df)
-                messagebox.showinfo('Frames event coding tool',
-                                    'PCS Allocation Completed, Please check the PCS output file to see status.')
-            elif sht_name == 'CAT':
-                cat_df = sht.range('A1').options(pandas.DataFrame, header=1, index=False, expand='table').value
-                cat_df['Status'] = ''
-                cat_df.to_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)
-                blank_cat_df = cat_df
-                cat_event_coding.cat_event_coding(driver=driver, cat_df=cat_df, blank_cat_df=blank_cat_df)
-                messagebox.showinfo('Frames event coding tool',
-                                    'CAT Allocation Completed, Please check the CAT output file to see status.')
+            main_df = sht.range('A1').options(pandas.DataFrame, header=1, index=False, expand='table').value
+            main_df['Status'] = ''
+            main_df.to_csv(selected_event['output_filename'], index=False)
+            blank_df = main_df
+            main_dataframe.event_coding(selected_event['event'], driver=driver, main_df=main_df, blank_df=blank_df)
+            messagebox.showinfo('Frames event coding tool',
+                                selected_event['message'])
 
         # if output file checkbox is selected
         elif output_selected.get() == 1:
             open_edge()
             # work with output file
-            if sht_name == 'Property Claims':
-                pcs_df = pandas.read_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')))
-                blank_pcs_df = pcs_df.loc[pcs_df['Status'].isnull()]
-                pcs_event_coding.pcs_event_coding(driver=driver, pcs_df=pcs_df, blank_pcs_df=blank_pcs_df)
-                messagebox.showinfo('Frames event coding tool',
-                                    'PCS Allocation Completed, Please check the PCS output file to see status.')
-
-            elif sht_name == 'CAT':
-                cat_df = pandas.read_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')))
-                blank_cat_df = cat_df.loc[cat_df['Status'].isnull()]
-                cat_event_coding.cat_event_coding(driver=driver, cat_df=cat_df, blank_cat_df=blank_cat_df)
-                messagebox.showinfo('Frames event coding tool',
-                                    'CAT Allocation Completed, Please check the CAT output file to see status.')
+            main_df = pandas.read_csv(selected_event['output_filename'])
+            blank_df = main_df.loc[main_df['Status'].isnull()]
+            main_dataframe.event_coding(selected_event['event'], driver=driver, main_df=main_df, blank_df=blank_df)
+            messagebox.showinfo('Frames event coding tool',
+                                selected_event['message'])
 
     except Exception as msg:
         driver.quit()
         messagebox.showerror('Frames event coding tool', traceback.format_exc())
 
 def run_refresh(event):
+    if event == 'pcs':
+        selected_event = {'event':'PCS',
+                          'output_filename':'PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')),
+                          'message':'PCS Allocation Completed, Please check the PCS output file to see status.'}
+    elif event == 'cat':
+        selected_event = {'event':'CAT',
+                          'output_filename':'CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')),
+                          'message':'CAT Allocation Completed, Please check the CAT output file to see status.'}
+    elif event == 'vars':
+        selected_event = {'event':'VARS',
+                          'output_filename':'VARS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')),
+                          'message':'VARS Allocation Completed, Please check the VARS output file to see status.'}
     try:
-        if event == 'cat':
-            cat_df = pandas.read_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')))
-        elif event == 'pcs':
-            pcs_df = pandas.read_csv('PCS Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')))
+        main_df = pandas.read_csv(selected_event['output_filename'])
     except:
         messagebox.showerror('Frames event coding tool',
                             'Error: Ouptut file does not exist.')
         return
     open_edge()
     try:
-        if event == 'cat':
-            ue_cat_df = cat_df.loc[cat_df['Status'] == 'Undefined Error']
-            if ue_cat_df.shape[0] > 0:
-                cat_event_coding.cat_event_refresh(driver=driver, cat_df=cat_df, ue_cat_df=ue_cat_df)
-                messagebox.showinfo('Frames event coding tool',
-                                    'CAT Allocation Completed, Please check the CAT output file to see status.')
-            else:
-                messagebox.showinfo('Frames event coding tool',
-                                    'No BPR found with undefined error status in CAT output file.')
-
-        elif event == 'pcs':
-            ue_pcs_df = pcs_df.loc[pcs_df['Status'] == 'Undefined Error']
-            if ue_pcs_df.shape[0] > 0:
-                pcs_event_coding.pcs_event_refresh(driver=driver, pcs_df=pcs_df,ue_pcs_df=ue_pcs_df)
-                messagebox.showinfo('Frames event coding tool',
-                                'PCS Allocation Completed, Please check the PCS output file to see status.')
-            else:
-                messagebox.showinfo('Frames event coding tool',
-                                    'No BPR found with undefined error status in PCS output file.')
+        ue_df = main_df.loc[main_df['Status'] == 'Undefined Error']
+        if ue_df.shape[0] > 0:
+            main_dataframe.event_refresh(event=selected_event['event'],driver=driver, main_df=main_df, ue_df=ue_df)
+            messagebox.showinfo('Frames event coding tool',
+                                selected_event['message'])
+        else:
+            messagebox.showinfo('Frames event coding tool',
+                                'No BPR found with undefined error status in output file.')
 
     except Exception as msg:
         driver.quit()
         messagebox.showerror('Frames event coding tool', traceback.format_exc())
-
 
 if __name__ == '__main__':
     window = tk.Tk()
@@ -157,6 +239,13 @@ if __name__ == '__main__':
                         command=lambda : run_event('Property Claims')).grid(row=2,column=1,pady=5)
     btn_pcs_refresh = tk.Button(master=frm_extract, text='Refresh', font=('Arial', 10), width=15, bg='floral white',
                         command=lambda : run_refresh('pcs')).grid(row=2,column=2, pady=5)
+    # ----------------------------- vars event code -----------------------------------
+    lbl_vars = tk.Label(master=frm_extract, text='Various event coding',font=('Arial',10), width=30, borderwidth=2,
+                          relief="ridge").grid(row=3, column=0, pady=5)
+    btn_vars = tk.Button(master=frm_extract, text='Run',font=('Arial',10), width=15, bg='floral white',
+                        command=lambda : run_event('Various')).grid(row=3,column=1,pady=5)
+    btn_vars_refresh = tk.Button(master=frm_extract, text='Refresh', font=('Arial', 10), width=15, bg='floral white',
+                        command=lambda : run_refresh('vars')).grid(row=3,column=2, pady=5)
     # lbl_status = tk.Label(text='status...', width=50)
     greeting.pack()
     frm_open.pack(fill=tk.BOTH)

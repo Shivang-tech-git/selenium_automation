@@ -36,7 +36,7 @@ def cat_event_coding(driver, cat_df, blank_cat_df):
     # --------------- navigate to outstanding movements -------------------
     axaXlElementFinder('//td[@class="mainmenu" and text()="Claims"]','click')
     axaXlElementFinder('//div[@id="claims.outstandingMovements"]/a[text()="Outstanding movements"]','click')
-    # --------------- For each row in cat_df, find BPR --------------------
+    # --------------- For each row in main_df, find BPR --------------------
     for i, row in blank_cat_df.iterrows():
         cat_coding_process(df=blank_cat_df,i=i,row=row)
         cat_df.loc[cat_df['BPR'] == blank_cat_df.at[i, 'BPR'], 'Status'] = blank_cat_df.at[i, 'Status']
@@ -45,7 +45,7 @@ def cat_event_coding(driver, cat_df, blank_cat_df):
     # -------------- run again for undefined error -----------------
     if err_df.shape[0] > 0:
         for i, row in err_df.iterrows():
-            # -------------- update cat_df with new values from err_df --------------
+            # -------------- update main_df with new values from err_df --------------
             cat_coding_process(df=err_df, i=i, row=row)
             cat_df.loc[cat_df['BPR'] == err_df.at[i, 'BPR'], 'Status'] = err_df.at[i, 'Status']
             cat_df.to_csv('CAT Output {}.CSV'.format(datetime.today().strftime('%d-%m-%Y')), index=False)

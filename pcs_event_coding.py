@@ -72,7 +72,6 @@ def pcs_coding_process(df, i, row):
                 waiting = WebDriverWait(pcs_driver, 20).until(
                     EC.presence_of_element_located((By.XPATH, '//table[@class="popupTable"]')))
                 # -------------------------------- check property services code ------------------------------
-
                 axaXlElementFinder(
                     '//table[@class="popupTable"]/descendant::td[./preceding-sibling::td[contains(text(),"Claim ID :")]]/a',
                     'click')
@@ -107,6 +106,7 @@ def pcs_coding_process(df, i, row):
                 axaXlElementFinder(
                     '//table[@class="popupTable"]/descendant::input[@name="linkPressed"and @value="Search"]',
                     'click')
+
                 # ------------------------------ cases > no results found or multiple cat codes or one cat code ----------------
                 waiting = WebDriverWait(pcs_driver, 20).until(EC.presence_of_element_located(
                     (By.XPATH, '//div[@class="popupBody"]/descendant::td[@class="tabledata"]')))
