@@ -2,8 +2,8 @@
 from msedge.selenium_tools import Edge, EdgeOptions
 from tkinter import messagebox
 from tkinter import filedialog
-from FramesEventCoding import cat_event_coding
-from FramesEventCoding import pcs_event_coding
+# from FramesEventCoding import cat_event_coding
+# from FramesEventCoding import pcs_event_coding
 from FramesEventCoding import main_dataframe
 from pathlib import Path
 from datetime import datetime

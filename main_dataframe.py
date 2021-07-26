@@ -57,7 +57,11 @@ def event_coding(event, driver, main_df, blank_df):
 def coding_process(df, i, row):
     try:
         if row['BPR'] != '':
-            axaXlElementFinder('//input[@type = "text" and @name = "bpr"]', 'sendKeys', row['BPR'])
+            try:
+                BPR = int(float(row['BPR']))
+            except:
+                BPR = row['BPR']
+            axaXlElementFinder('//input[@type = "text" and @name = "bpr"]', 'sendKeys', BPR)
             axaXlElementFinder('//input[@type = "submit" and @value = "Search"]', 'click')
             assign_event_exist = False
             search_code = []
@@ -83,9 +87,13 @@ def coding_process(df, i, row):
                     if (property_services == '') and (df.at[i, 'Description'] == 'Mandatory Review. Event Code VARS'):
                         search_code = ['vars', '', '', '', '', '']
                     elif property_services == '':
+                        axaXlElementFinder(
+                            '(//table[@class="popupTable"]/descendant::input[@value="Cancel" and @type="submit"])[1]',
+                            'click')
                         df.at[i, 'Status'] = 'Property services code not available'
                         return
-                    search_code = ['', 'PCS {}'.format(property_services), '', '', '', '']
+                    else:
+                        search_code = ['', 'PCS {}'.format(property_services), '', '', '', '']
                 elif main_event == 'VARS':
                     search_code = ['vars', '', '', '', '', '']
                 # ------------------------------ search for specific event code results ----------------------------------------
@@ -161,8 +169,3 @@ def pcs_event_code_process():
         pass
     main_driver.close()
     main_driver.switch_to.window(main_driver.window_handles[0])
-    if property_services == '':
-        axaXlElementFinder(
-            '(//table[@class="popupTable"]/descendant::input[@value="Cancel" and @type="submit"])[1]',
-            'click')
-        return
