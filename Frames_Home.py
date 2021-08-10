@@ -23,8 +23,8 @@ def open_edge():
     Edge_Options.use_chromium = True
     Edge_Options.add_argument('no-sandbox')
     Edge_Options.add_argument("user-data-dir=C:/Users/" + getpass.getuser() + "/AppData/Local/Microsoft/Edge/User Data")
-    Edge_Options.add_argument("headless")
-    Edge_Options.add_argument("disable-gpu")
+    # Edge_Options.add_argument("headless")
+    # Edge_Options.add_argument("disable-gpu")
     try:
         driver = Edge(options=Edge_Options)
     except:
